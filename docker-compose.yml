@@ -1,0 +1,78 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2  
+    container_name: Mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data       
+      - ./mosquitto/log:/mosquitto/log
+    networks:
+      - sensor-net
+
+  nodered:
+    image: nodered/node-red
+    container_name: Nodered
+    restart: unless-stopped
+    ports:
+      - "1880:1880"
+    volumes:
+      - ./nodered_data:/data
+    depends_on:
+      - mosquitto
+      - influxdb
+    networks:
+      - sensor-net
+
+  controller_simulator:
+    build: ./controller_simulator
+    container_name: Controller-simulator
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+    environment:
+      - BROKER=mosquitto
+    networks:
+      - sensor-net
+
+  influxdb:
+    image: influxdb:2.7
+    container_name: Influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./influxdb_data:/var/lib/influxdb2
+      - ./influxdb_config:/etc/influxdb2
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=Admin123
+      - DOCKER_INFLUXDB_INIT_ORG=sensorsim
+      - DOCKER_INFLUXDB_INIT_BUCKET=sensor_data
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-influx-token
+    networks:
+      - sensor-net
+      
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: Portainer
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - sensor-net
+
+networks:
+  sensor-net:
+    driver: bridge
+
+volumes:
+  influxdb_data:
+  portainer_data:
