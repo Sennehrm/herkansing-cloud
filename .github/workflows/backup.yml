@@ -1,17 +1,17 @@
-name: Automated 2-Day Backup
+name: Automated 2-Day Rolling Backup
 
 on:
   schedule:
     # Draait elke 2 dagen om 00:00 UTC
     - cron: '0 0 */2 * *'
-  workflow_dispatch: # Maakt het ook mogelijk om de backup handmatig met 1 klik te testen op GitHub
+  workflow_dispatch: # Handmatig starten via GitHub Actions tab
 
 permissions:
   contents: write
 
 jobs:
   backup:
-    name: Backup naar backup-branch
+    name: 2-Stage Rolling Backup
     runs-on: ubuntu-latest
 
     steps:
@@ -25,10 +25,22 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Maak backup en overschrijf backup-branch
+      - name: Roteer en overschrijf backups
         run: |
-          # Switch naar een orphan backup branch en overschrijf deze forceerbaar
-          git checkout --orphan backup
+          # 1. Schuif de huidige 'backup-latest' door naar 'backup-previous' (als deze al bestaat)
+          if git ls-remote --heads origin backup-latest | grep -q 'backup-latest'; then
+            echo "Bestaande backup-latest doorschuiven naar backup-previous..."
+            git fetch origin backup-latest
+            git checkout backup-latest
+            git branch -D backup-previous 2>/dev/null || true
+            git checkout -b backup-previous
+            git push origin backup-previous --force
+          fi
+
+          # 2. Maak van de huidige main-code de nieuwe 'backup-latest'
+          echo "Nieuwe backup aanmaken op branch backup-latest..."
+          git checkout main
+          git checkout --orphan backup-latest
           git add -A
-          git commit -m "Automated Backup: $(date -u +'%Y-%m-%d %H:%M UTC')" || echo "No changes to commit"
-          git push origin backup --force
+          git commit -m "Latest Backup: $(date -u +'%Y-%m-%d %H:%M UTC')" || echo "No changes to commit"
+          git push origin backup-latest --force

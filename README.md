@@ -82,5 +82,9 @@ Het project bevat geautomatiseerde deployment-scripts ([deploy.bat](deploy.bat),
 4. **`docker image prune -f`**: Verwijdert ongebruikte 'dangling' images om schijfruimte vrij te houden.
 5. **Health Check (`docker compose ps`)**: Valideert dat alle services actief en gezond draaien.
 
-### 2. Automatische Backup via GitHub Actions
-Er is een geautomatiseerde GitHub Actions workflow ingesteld (`.github/workflows/backup.yml`). Deze workflow draait automatisch **elke 2 dagen** (en kan handmatig getriggerd worden via *Actions* op GitHub). De workflow maakt een schone back-up van het hele project en overschrijft automatisch de branch genaamd **`backup`** via een force-push, zodat er altijd een up-to-date reservekopie in de cloud klaarstaat.
+### 2. Automatische Rolling Backup via GitHub Actions
+Er is een geautomatiseerde GitHub Actions workflow ingesteld (`.github/workflows/backup.yml`) met een 2-traps rotatiesysteem:
+* Draait automatisch **elke 2 dagen** (en is handmatig te triggeren via het tabblad *Actions*).
+* **`backup-latest`**: Bevat altijd de meest recente back-up van het project.
+* **`backup-previous`**: Bevat de vorige back-up van 2 dagen geleden als extra herstelpunt.
+* Bij elke nieuwe run schuift de huidige back-up automatisch door naar `backup-previous` (waardoor de oudste overschreven wordt) en wordt de nieuwe code opgeslagen in `backup-latest`. Hierdoor zijn er altijd **twee veilige herstelpunten** beschikbaar in GitHub.
