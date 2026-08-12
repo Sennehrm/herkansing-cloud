@@ -6,27 +6,6 @@ Dit project implementeert een containergebaseerde **Edge IoT Gateway-architectuu
 
 ---
 
-## Systeemarchitectuur & Datastroom
-
-Alle services communiceren via het geïsoleerde Docker bridge-netwerk `sensor-net`:
-
-```mermaid
-graph LR
-    subgraph Edge Layer
-        A[Python Controller Simulator] -->|MQTT: sensor/controller/*| B(Mosquitto Broker :1883)
-    end
-
-    subgraph Processing & Storage
-        B -->|Subscribe| C(Node-RED :1880)
-        C -->|Validatie & Filtering| C
-        C -->|Flux API| D[(InfluxDB v2.7 :8086)]
-    end
-
-    subgraph Monitoring & UI
-        D -->|Data Query| E[Live Dashboard]
-        F[Portainer :9000] -.->|docker.sock| A & B & C & D
-    end
-```
 
 ### Microservices:
 1. **Mosquitto (`eclipse-mosquitto:2`)**: Centrale MQTT message broker die inkomende sensorberichten ontvangt en distribueert.
