@@ -1,108 +1,103 @@
-# Smart Sensor Gateway met Monitoring en Automatisatie
+# Herkansing cloud opdracht
 
-**Vak**: Cloud Computing  
-**Student**: Senne Herman  
-**Opleiding**: Bachelor Elektronica-ICT, VIVES  
+## Overzicht van het Project
 
----
-
-## Overzicht van het project
-
-In dit project is een IoT Gateway gebouwd met Docker Compose. Het systeem leest continu sensordata (joysticks en knoppen van een controller) in via MQTT, valideert en filtert deze data in Node-RED, slaat de metingen op in InfluxDB en toont alles op een live dashboard. Het beheer van de containers gebeurt via Portainer.
-
-De architectuur bestaat uit 5 containers die draaien binnen een eigen bridge-netwerk (`sensor-net`):
-1. **Mosquitto (MQTT Broker)**: Ontvangt en verdeelt de MQTT-berichten van de sensoren.
-2. **Controller Simulator (Python)**: Stuurt elke 5 seconden willekeurige joystickposities (X en Y tussen 0 en 255) en knopstatussen door naar Mosquitto.
-3. **Node-RED**: Ontvangt de MQTT-data, controleert of de waarden geldig zijn via een Function node en schrijft alleen correcte data door naar InfluxDB.
-4. **InfluxDB (v2.7)**: Tijdreeksdatabase waarin alle metingen worden bewaard en gevisualiseerd.
-5. **Portainer**: Webinterface om de status van alle containers en het netwerk te bekijken.
+Dit project implementeert een containergebaseerde **Edge IoT Gateway-architectuur**. Het systeem leest continu industriële sensordata (joysticks en controllerknoppen) uit via MQTT, verwerkt en valideert de datastroom in Node-RED, slaat de tijdreeksmetingen op in InfluxDB en visualiseert deze in een live dashboard. Het volledige ecosysteem wordt georkestreerd met Docker Compose en beheerd via Portainer.
 
 ---
 
-## Installatie en opstarten
+## Systeemarchitectuur & Datastroom
 
-Zorg ervoor dat Docker en Docker Compose geïnstalleerd zijn op het systeem.
+Alle services communiceren via het geïsoleerde Docker bridge-netwerk `sensor-net`:
 
-### 1. Repository clonen en starten
-Open een terminal en voer de volgende commando's uit:
+```mermaid
+graph LR
+    subgraph Edge Layer
+        A[Python Controller Simulator] -->|MQTT: sensor/controller/*| B(Mosquitto Broker :1883)
+    end
 
+    subgraph Processing & Storage
+        B -->|Subscribe| C(Node-RED :1880)
+        C -->|Validatie & Filtering| C
+        C -->|Flux API| D[(InfluxDB v2.7 :8086)]
+    end
+
+    subgraph Monitoring & UI
+        D -->|Data Query| E[Live Dashboard]
+        F[Portainer :9000] -.->|docker.sock| A & B & C & D
+    end
+```
+
+### Microservices:
+1. **Mosquitto (`eclipse-mosquitto:2`)**: Centrale MQTT message broker die inkomende sensorberichten ontvangt en distribueert.
+2. **Controller Simulator (Python 3.12)**: Simuleert een controller met 2 joysticks ($X, Y \in [0, 255]$) en knoppen (A, B, X, Y, L1, R1, L2, R2) en publiceert elke 5 seconden.
+3. **Node-RED**: Ingest data via MQTT, voert datavalidatie en filtering uit in een zelfgeschreven Function Node en stuurt gevalideerde data door naar InfluxDB.
+4. **InfluxDB 2.7**: Tijdreeksdatabase die metingen bewaart met timestamps en metadata.
+5. **Portainer CE**: Beheerinterface voor realtime inzicht in containerstatussen, logging en resources.
+
+---
+
+## Volledig Geautomatiseerde Installatie (Zero-Config)
+
+Het project is **100% plug-and-play**. Na het clonen start de hele keten automatisch op inclusief pre-installed plugins, tokens en dashboard:
+
+### 1. Repository clonen & starten
 ```bash
 git clone https://github.com/Sennehrm/herkansing-cloud.git
 cd herkansing-cloud
-docker compose up -d --build
+docker compose up -d 
 ```
 
-Je kunt het project ook opstarten via het deployment-script:
+*Of via de CI/CD deployment scripts:*
 * **Windows**: `.\deploy.bat`
 * **Linux**: `./deploy.sh`
 * **Makefile**: `make deploy`
 
 ---
 
-## Toegang tot de interfaces
+## Technische Specificaties & Implementatie
 
-| Service | URL | Inloggegevens |
-| :--- | :--- | :--- |
-| **InfluxDB (Dashboard)** | http://localhost:8086 | Gebruiker: `admin` <br> Wachtwoord: `Admin123` |
-| **Node-RED** | http://localhost:1880 | Geen inlog nodig |
-| **Portainer** | http://localhost:9000 | Gebruiker: `admin` (wachtwoord zelf kiezen bij 1e keer opstarten) |
-| **Mosquitto (MQTT)** | localhost:1883 | Anonieme toegang ingeschakeld |
+### 1. Sensorcommunicatie (MQTT)
+De simulator publiceert naar drie afzonderlijke topics:
+* `sensor/controller/joystick1` ➔ `{"x": x1, "y": y1}`
+* `sensor/controller/joystick2` ➔ `{"x": x2, "y": y2}`
+* `sensor/controller/buttons` ➔ `"A"`, `"B"`, `"X"`, `"Y"`, `"L1"`, `"R1"`, `"L2"`, `"R2"`
 
----
+### 2. Dataverwerking & Validatielogica (Node-RED)
+In Node-RED draait de zelfgeschreven **Function Node** (`Validatie & Datalogica`):
+* **Bereikvalidatie**: Controleert of $0 \le X, Y \le 255$. Foutieve of ontbrekende meetwaarden worden onmiddellijk gedropt (niet naar de databank geschreven).
+* **Button Mapping**: Vertaalt de knoptekst naar een numeriek ID (0 t/m 7) en bewaart de naam als label.
+* **Filtering**: Negeert ongeldige of `UNKNOWN` knoppen.
+* **Auto-Provisioning**: De Node-RED container bouwt via `nodered/Dockerfile` automatisch de `node-red-contrib-influxdb` plugin in en laadt de flows en credentials zonder handmatige stappen.
 
-## InfluxDB Dashboard bekijken
-
-Het dashboard staat na het opstarten al direct klaar in InfluxDB onder de naam **Smart Controller Gateway**.
-
-> **Belangrijk bij het openen van het dashboard:**  
-> InfluxDB zet de auto-refresh standaard op pauze. Om de data live te zien binnenkomen:  
-> 1. Klik rechtsboven in het dashboard op het **refresh-icoontje (↻)** en zet dit op **`5s`**.  
-> 2. Zet de tijdfilter daarnaast op **`Past 5m`** (of `Past 15m`) zodat de live lijngrafieken mooi over het hele scherm lopen.
-
-### Wat staat er op het dashboard:
-* **Joystick 1 & Joystick 2 (Live)**: Twee lijngrafieken die realtime de X- en Y-as tonen.
-* **Laatste Knop**: Toont de meest recent ingedrukte knop.
-* **Gemiddelde Joystick 1 & 2 (1 uur)**: Berekent het gemiddelde van de X- en Y-waarden over het afgelopen uur.
-* **Gemiddelde Joystick 1 & 2 (24 uur)**: Berekent het gemiddelde over de afgelopen 24 uur.
+### 3. Opslag & Dashboarding (InfluxDB)
+InfluxDB wordt bij de allereerste start automatisch geconfigureerd via `/docker-entrypoint-initdb.d/setup.sh` en laadt direct het dashboard in met:
+* **Joystick 1 Live (X & Y)**: Realtime lijngrafiek van Joystick 1 uitslagen.
+* **Joystick 2 Live (X & Y)**: Realtime lijngrafiek van Joystick 2 uitslagen.
+* **Laatste Knop**: Toont live de laatst ingedrukte controllerknop.
+* **Gemiddelde Joystick 1 & 2 (1 uur)**: Berekent het gemiddelde over het afgelopen 1 uur (`start: -1h`).
+* **Gemiddelde Joystick 1 & 2 (24 uur)**: Berekent het gemiddelde over 24 uur (`start: -24h`).
 
 ---
 
-## Dataverwerking en validatie (Node-RED)
+##  Toegang tot Services & Credentials
 
-In Node-RED draait een op maat gemaakte Function node (`Validatie & Datalogica`). Deze voert de volgende controles uit:
-* **Bereikcontrole**: Controleert of de X- en Y-waarden effectief getallen zijn en tussen 0 en 255 liggen. Ongeldige of ontbrekende waarden worden meteen weggegooid.
-* **Knop mapping**: Zet de binnengekomen knopnaam (zoals A, B, X, Y, L1, R1, L2, R2) om naar een numeriek ID (0 t/m 7).
-* **Filtering**: Onbekende knoppen of `UNKNOWN` statussen worden genegeerd en niet opgeslagen in de database.
-
-De benodigde InfluxDB plugin (`node-red-contrib-influxdb`) wordt tijdens het bouwen van de container automatisch geïnstalleerd via de Dockerfile in de map `nodered`.
-
----
-
-## Hoe de deployments werken (CI/CD)
-
-Om het systeem snel en geautomatiseerd bij te werken bij code-aanpassingen, zijn er deployment-scripts meegeleverd:
-* **Windows**: `.\deploy.bat`
-* **Linux / VM**: `./deploy.sh`
-* **Makefile**: `make deploy`
-
-### Wat doet het deployment-script precies?
-Wanneer je het script uitvoert, gebeurt het volgende automatisch achter elkaar:
-1. **Nieuwe code ophalen**: `git pull origin main` haalt de laatste wijzigingen binnen vanaf GitHub.
-2. **Containers herbouwen**: `docker compose build --no-cache` bouwt de containers opnieuw op basis van de nieuwe code.
-3. **Containers herstarten**: `docker compose up -d --remove-orphans` herstart de services met de nieuwe versie, zonder dat data verloren gaat.
-4. **Schijfruimte opruimen**: `docker image prune -f` verwijdert oude, ongebruikte Docker images zodat de schijf niet volloopt.
-5. **Status tonen**: `docker compose ps` toont direct of alle 5 containers weer actief en gezond draaien.
-
-### Waarom is dit CI/CD?
-In plaats van handmatig containers te stoppen, mappen te kopiëren en commando's te typen, is één commando (`.\deploy.bat` of `make deploy`) voldoende om de hele stack automatisch bij te werken naar de nieuwste versie. In een productieomgeving kan dit script automatisch worden uitgevoerd via een GitHub Actions workflow zodra er code naar de `main` branch wordt gepusht.
+| Service | URL | Gebruikersnaam | Wachtwoord / Token |
+| :--- | :--- | :--- | :--- |
+| **InfluxDB Dashboard** | [http://localhost:8086](http://localhost:8086) | `admin` | `Admin123` / Token: `eGTWGKaiZxw1xHj92IAwexfN2fJnh5FM9ulXBciCowq_3wTUizDJibOcnSVPSy3J5xfeVVdLJZi5sw33X6Bolg==` |
+| **Node-RED Flows** | [http://localhost:1880](http://localhost:1880) | - | *(Pre-geconfigureerd met token)* |
+| **Portainer UI** | [http://localhost:9000](http://localhost:9000) | `admin` | *(In te stellen bij 1e opstart)* |
+| **Mosquitto MQTT** | `localhost:1883` | - | *(Anonieme toegang toegestaan)* |
 
 ---
 
-## Reflectie
+##  CI/CD & Deployment Pipeline
 
-Tijdens het project zijn verschillende onderdelen van cloud computing en IoT gecombineerd:
-* Het opzetten van containerized microservices in een geïsoleerd bridge-netwerk.
-* Communicatie via MQTT tussen een Python-applicatie en Node-RED.
-* Datavalidatie en datatransformatie vóór opslag in een time-series databank.
-* Het visualiseren en aggregeren van data (gemiddelden per uur en per 24 uur) via Flux queries in InfluxDB.
-* Het automatiseren van het bouw- en deploymentproces via Docker Compose en scripts.
+Het project bevat geautomatiseerde deployment-scripts ([deploy.bat](deploy.bat), [deploy.sh](deploy.sh) en [makefile](makefile)) die het volledige CI/CD-principe demonstreren:
+
+1. **`git pull origin main`**: Haalt de nieuwste broncode binnen vanaf de Git repository.
+2. **`docker compose build --no-cache`**: Herbouwt de gewijzigde applicatie-images schoon zonder oude build-cache.
+3. **`docker compose up -d --remove-orphans`**: Rold de nieuwe containers uit met minimale downtime.
+4. **`docker image prune -f`**: Verwijdert ongebruikte 'dangling' images om schijfruimte vrij te houden.
+5. **Health Check (`docker compose ps`)**: Valideert dat alle services actief en gezond draaien.
+
