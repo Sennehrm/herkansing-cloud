@@ -83,4 +83,4 @@ Het project bevat geautomatiseerde deployment-scripts ([deploy.bat](deploy.bat),
 5. **Health Check (`docker compose ps`)**: Valideert dat alle services actief en gezond draaien.
 
 ### 2. Automatische Backup via GitHub Actions
-Er is een automatische GitHub Actions workflow ingesteld (`.github/workflows/backup.yml`). Bij elke push naar `main` maakt GitHub Actions automatisch een gecomprimeerd archief (`.tar.gz`) aan met alle flows, database-configuraties en compose-bestanden en slaat deze op als downloadbaar artefact onder het tabblad **Actions** in GitHub.
+Er is een geautomatiseerde GitHub Actions workflow ingesteld (`.github/workflows/backup.yml`). Deze workflow draait automatisch **elke 2 dagen** (en kan handmatig getriggerd worden via *Actions* op GitHub). De workflow maakt een schone back-up van het hele project en overschrijft automatisch de branch genaamd **`backup`** via een force-push, zodat er altijd een up-to-date reservekopie in de cloud klaarstaat.

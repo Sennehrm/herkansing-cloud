@@ -1,31 +1,34 @@
-name: Automated Gateway Backup
+name: Automated 2-Day Backup
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+  schedule:
+    # Draait elke 2 dagen om 00:00 UTC
+    - cron: '0 0 */2 * *'
+  workflow_dispatch: # Maakt het ook mogelijk om de backup handmatig met 1 klik te testen op GitHub
+
+permissions:
+  contents: write
 
 jobs:
   backup:
-    name: Create & Upload Backup
+    name: Backup naar backup-branch
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Create Backup Archive
-        run: |
-          mkdir -p backup_export
-          tar -czf backup_export/gateway_backup_$(date +'%Y-%m-%d_%H-%M').tar.gz \
-            nodered_data/flows.json \
-            nodered_data/settings.js \
-            influxdb_data \
-            docker-compose.yml
-
-      - name: Upload Backup Artifact to GitHub
-        uses: actions/upload-artifact@v4
         with:
-          name: gateway-backup-${{ github.run_number }}
-          path: backup_export/
-          retention-days: 30
+          fetch-depth: 0
+
+      - name: Configureer Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Maak backup en overschrijf backup-branch
+        run: |
+          # Switch naar een orphan backup branch en overschrijf deze forceerbaar
+          git checkout --orphan backup
+          git add -A
+          git commit -m "Automated Backup: $(date -u +'%Y-%m-%d %H:%M UTC')" || echo "No changes to commit"
+          git push origin backup --force
