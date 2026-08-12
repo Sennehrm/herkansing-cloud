@@ -40,6 +40,7 @@ jobs:
           # 2. Maak van de huidige main-code de nieuwe 'backup-latest'
           echo "Nieuwe backup aanmaken op branch backup-latest..."
           git checkout main
+          git branch -D backup-latest 2>/dev/null || true
           git checkout --orphan backup-latest
           git add -A
           git commit -m "Latest Backup: $(date -u +'%Y-%m-%d %H:%M UTC')" || echo "No changes to commit"
