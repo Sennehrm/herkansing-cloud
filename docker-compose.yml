@@ -72,6 +72,7 @@ services:
 
 networks:
   sensor-net:
+    name: sensor-net
     driver: bridge
 
 volumes:
