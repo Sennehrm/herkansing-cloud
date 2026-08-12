@@ -14,7 +14,7 @@ services:
       - sensor-net
 
   nodered:
-    image: nodered/node-red
+    build: ./nodered
     container_name: Nodered
     restart: unless-stopped
     ports:
