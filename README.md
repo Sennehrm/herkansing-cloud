@@ -61,9 +61,9 @@ InfluxDB wordt bij de allereerste start automatisch geconfigureerd via `/docker-
 
 ##  Toegang tot Services & Credentials
 
-| Service | URL | Gebruikersnaam | Wachtwoord / Token |
+| Service | URL | Gebruikersnaam | Wachtwoord |
 | :--- | :--- | :--- | :--- |
-| **InfluxDB Dashboard** | [http://localhost:8086](http://localhost:8086) | `admin` | `Admin123` / Token: `eGTWGKaiZxw1xHj92IAwexfN2fJnh5FM9ulXBciCowq_3wTUizDJibOcnSVPSy3J5xfeVVdLJZi5sw33X6Bolg==` |
+| **InfluxDB Dashboard** | [http://localhost:8086](http://localhost:8086) | `admin` | `Admin123`|
 | **Node-RED Flows** | [http://localhost:1880](http://localhost:1880) | - | *(Pre-geconfigureerd met token)* |
 | **Portainer UI** | [http://localhost:9000](http://localhost:9000) | `admin` | *(In te stellen bij 1e opstart)* |
 | **Mosquitto MQTT** | `localhost:1883` | - | *(Anonieme toegang toegestaan)* |
