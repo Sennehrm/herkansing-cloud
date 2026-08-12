@@ -48,17 +48,16 @@ services:
       - "8086:8086"
     volumes:
       - ./influxdb_data:/var/lib/influxdb2
-      - ./influxdb_setup:/docker-entrypoint-initdb.d
     environment:
       - DOCKER_INFLUXDB_INIT_MODE=setup
       - DOCKER_INFLUXDB_INIT_USERNAME=admin
       - DOCKER_INFLUXDB_INIT_PASSWORD=Admin123
       - DOCKER_INFLUXDB_INIT_ORG=sensorsim
       - DOCKER_INFLUXDB_INIT_BUCKET=sensor_data
-      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-influx-token
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=eGTWGKaiZxw1xHj92IAwexfN2fJnh5FM9ulXBciCowq_3wTUizDJibOcnSVPSy3J5xfeVVdLJZi5sw33X6Bolg==
     networks:
       - sensor-net
-      
+
   portainer:
     image: portainer/portainer-ce:latest
     container_name: Portainer

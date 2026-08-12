@@ -1,6 +1,4 @@
 # Docker volumes & Database data
-influxdb_data/
-influxdb_config/
 mosquitto/data/
 mosquitto/log/
 portainer_data/
