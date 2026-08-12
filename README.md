@@ -73,7 +73,7 @@ docker compose up -d --build
 | Service | URL | Gebruikersnaam | Wachtwoord / Token |
 | :--- | :--- | :--- | :--- |
 | **Node-RED** | [http://localhost:1880](http://localhost:1880) | - | - |
-| **InfluxDB** | [http://localhost:8086](http://localhost:8086) | `admin` | `adminpassword123` / Token: `my-super-secret-auth-token` |
+| **InfluxDB** | [http://localhost:8086](http://localhost:8086) | `admin` | `Admin123`  |
 | **Portainer** | [http://localhost:9000](http://localhost:9000) | `admin` | *(In te stellen bij eerste opstart)* |
 | **Mosquitto** | `localhost:1883` | - | - |
 
