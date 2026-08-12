@@ -1,0 +1,31 @@
+name: Automated Gateway Backup
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  backup:
+    name: Create & Upload Backup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Backup Archive
+        run: |
+          mkdir -p backup_export
+          tar -czf backup_export/gateway_backup_$(date +'%Y-%m-%d_%H-%M').tar.gz \
+            nodered_data/flows.json \
+            nodered_data/settings.js \
+            influxdb_data \
+            docker-compose.yml
+
+      - name: Upload Backup Artifact to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: gateway-backup-${{ github.run_number }}
+          path: backup_export/
+          retention-days: 30

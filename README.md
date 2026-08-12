@@ -6,7 +6,6 @@ Dit project implementeert een containergebaseerde **Edge IoT Gateway-architectuu
 
 ---
 
-
 ### Microservices:
 1. **Mosquitto (`eclipse-mosquitto:2`)**: Centrale MQTT message broker die inkomende sensorberichten ontvangt en distribueert.
 2. **Controller Simulator (Python 3.12)**: Simuleert een controller met 2 joysticks ($X, Y \in [0, 255]$) en knoppen (A, B, X, Y, L1, R1, L2, R2) en publiceert elke 5 seconden.
@@ -50,33 +49,38 @@ In Node-RED draait de zelfgeschreven **Function Node** (`Validatie & Datalogica`
 * **Auto-Provisioning**: De Node-RED container bouwt via `nodered/Dockerfile` automatisch de `node-red-contrib-influxdb` plugin in en laadt de flows en credentials zonder handmatige stappen.
 
 ### 3. Opslag & Dashboarding (InfluxDB)
-InfluxDB wordt bij de allereerste start automatisch geconfigureerd via `/docker-entrypoint-initdb.d/setup.sh` en laadt direct het dashboard in met:
+Het dashboard staat na het opstarten al direct klaar in InfluxDB onder de naam **Smart Controller Gateway**:
 * **Joystick 1 Live (X & Y)**: Realtime lijngrafiek van Joystick 1 uitslagen.
 * **Joystick 2 Live (X & Y)**: Realtime lijngrafiek van Joystick 2 uitslagen.
 * **Laatste Knop**: Toont live de laatst ingedrukte controllerknop.
 * **Gemiddelde Joystick 1 & 2 (1 uur)**: Berekent het gemiddelde over het afgelopen 1 uur (`start: -1h`).
 * **Gemiddelde Joystick 1 & 2 (24 uur)**: Berekent het gemiddelde over 24 uur (`start: -24h`).
 
+> **Tip voor live visualisatie:**  
+> InfluxDB zet de auto-refresh standaard op pauze. Klik rechtsboven in het dashboard op het refresh-icoontje (↻) en zet dit op **`5s`** en de tijdfilter op **`Past 5m`** om de data live te zien binnenstromen.
+
 ---
 
-##  Toegang tot Services & Credentials
+## Toegang tot Services & Credentials
 
 | Service | URL | Gebruikersnaam | Wachtwoord |
 | :--- | :--- | :--- | :--- |
-| **InfluxDB Dashboard** | [http://localhost:8086](http://localhost:8086) | `admin` | `Admin123`|
+| **InfluxDB Dashboard** | [http://localhost:8086](http://localhost:8086) | `admin` | `Admin123` |
 | **Node-RED Flows** | [http://localhost:1880](http://localhost:1880) | - | *(Pre-geconfigureerd met token)* |
 | **Portainer UI** | [http://localhost:9000](http://localhost:9000) | `admin` | *(In te stellen bij 1e opstart)* |
 | **Mosquitto MQTT** | `localhost:1883` | - | *(Anonieme toegang toegestaan)* |
 
 ---
 
-##  CI/CD & Deployment Pipeline
+## CI/CD & Automatische Backup via GitHub
 
+### 1. Deployment Scripts
 Het project bevat geautomatiseerde deployment-scripts ([deploy.bat](deploy.bat), [deploy.sh](deploy.sh) en [makefile](makefile)) die het volledige CI/CD-principe demonstreren:
-
-1. **`git pull origin main`**: Haalt de nieuwste broncode binnen vanaf de Git repository.
+1. **`git pull origin main`**: Haalt de nieuwste broncode binnen vanaf GitHub.
 2. **`docker compose build --no-cache`**: Herbouwt de gewijzigde applicatie-images schoon zonder oude build-cache.
-3. **`docker compose up -d --remove-orphans`**: Rold de nieuwe containers uit met minimale downtime.
+3. **`docker compose up -d --remove-orphans`**: Rolt de nieuwe containers uit met minimale downtime.
 4. **`docker image prune -f`**: Verwijdert ongebruikte 'dangling' images om schijfruimte vrij te houden.
 5. **Health Check (`docker compose ps`)**: Valideert dat alle services actief en gezond draaien.
 
+### 2. Automatische Backup via GitHub Actions
+Er is een automatische GitHub Actions workflow ingesteld (`.github/workflows/backup.yml`). Bij elke push naar `main` maakt GitHub Actions automatisch een gecomprimeerd archief (`.tar.gz`) aan met alle flows, database-configuraties en compose-bestanden en slaat deze op als downloadbaar artefact onder het tabblad **Actions** in GitHub.
