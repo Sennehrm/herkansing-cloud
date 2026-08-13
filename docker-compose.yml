@@ -70,6 +70,18 @@ services:
     networks:
       - sensor-net
 
+  watchtower:
+    image: containrrr/watchtower
+    container_name: Watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=86400
+    networks:
+      - sensor-net
+
 networks:
   sensor-net:
     name: sensor-net

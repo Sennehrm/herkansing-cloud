@@ -88,3 +88,20 @@ Er is een geautomatiseerde GitHub Actions workflow ingesteld (`.github/workflows
 * **`backup-latest`**: Bevat altijd de meest recente back-up van het project.
 * **`backup-previous`**: Bevat de vorige back-up van 2 dagen geleden als extra herstelpunt.
 * Bij elke nieuwe run schuift de huidige back-up automatisch door naar `backup-previous` (waardoor de oudste overschreven wordt) en wordt de nieuwe code opgeslagen in `backup-latest`. Hierdoor zijn er altijd **twee veilige herstelpunten** beschikbaar in GitHub.
+
+### 3. Watchtower voor automatische updates
+In `docker-compose.yml` is **Watchtower** (`containrrr/watchtower`) geïntegreerd:
+* Deze service draait op de achtergrond en controleert elke 24 uur automatisch of er nieuwe versies (images) zijn voor onze actieve containers (zoals Mosquitto of InfluxDB).
+* Als er een update is, downloadt Watchtower deze en start de betreffende container geruisloos opnieuw op met de nieuwste image. Dit garandeert dat de stack altijd up-to-date en veilig is zonder handmatig beheer.
+
+---
+
+## Reflectie
+
+Tijdens het project zijn verschillende onderdelen van cloud computing en IoT gecombineerd:
+* Het opzetten van containerized microservices in een geïsoleerd bridge-netwerk.
+* Communicatie via MQTT tussen een Python-applicatie en Node-RED.
+* Datavalidatie en datatransformatie vóór opslag in een time-series databank.
+* Het visualiseren en aggregeren van data (gemiddelden per uur en per 24 uur) via Flux queries in InfluxDB.
+* Het automatiseren van het bouw- en deploymentproces via Docker Compose, deployment-scripts en automatische rolling backups via GitHub.
+
