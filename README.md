@@ -95,13 +95,3 @@ In `docker-compose.yml` is **Watchtower** (`containrrr/watchtower`) geïntegreer
 * Als er een update is, downloadt Watchtower deze en start de betreffende container geruisloos opnieuw op met de nieuwste image. Dit garandeert dat de stack altijd up-to-date en veilig is zonder handmatig beheer.
 
 ---
-
-## Reflectie
-
-Tijdens het project zijn verschillende onderdelen van cloud computing en IoT gecombineerd:
-* Het opzetten van containerized microservices in een geïsoleerd bridge-netwerk.
-* Communicatie via MQTT tussen een Python-applicatie en Node-RED.
-* Datavalidatie en datatransformatie vóór opslag in een time-series databank.
-* Het visualiseren en aggregeren van data (gemiddelden per uur en per 24 uur) via Flux queries in InfluxDB.
-* Het automatiseren van het bouw- en deploymentproces via Docker Compose, deployment-scripts en automatische rolling backups via GitHub.
-
