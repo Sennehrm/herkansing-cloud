@@ -1,0 +1,26 @@
+# Docker volumes & Database data
+mosquitto/data/
+mosquitto/log/
+portainer_data/
+
+# Node-RED runtime & dependencies
+nodered_data/node_modules/
+nodered_data/.npm/
+nodered_data/.config.*.json
+nodered_data/.sessions/
+nodered_data/.flows*.backup
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.venv/
+env/
+
+# OS & IDE generated files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
