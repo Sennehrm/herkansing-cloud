@@ -1,0 +1,47 @@
+name: Automated 2-Day Rolling Backup
+
+on:
+  schedule:
+    # Draait elke 2 dagen om 00:00 UTC
+    - cron: '0 0 */2 * *'
+  workflow_dispatch: # Handmatig starten via GitHub Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  backup:
+    name: 2-Stage Rolling Backup
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configureer Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Roteer en overschrijf backups
+        run: |
+          # 1. Schuif de huidige 'backup-latest' door naar 'backup-previous' (als deze al bestaat)
+          if git ls-remote --heads origin backup-latest | grep -q 'backup-latest'; then
+            echo "Bestaande backup-latest doorschuiven naar backup-previous..."
+            git fetch origin backup-latest
+            git checkout backup-latest
+            git branch -D backup-previous 2>/dev/null || true
+            git checkout -b backup-previous
+            git push origin backup-previous --force
+          fi
+
+          # 2. Maak van de huidige main-code de nieuwe 'backup-latest'
+          echo "Nieuwe backup aanmaken op branch backup-latest..."
+          git checkout main
+          git branch -D backup-latest 2>/dev/null || true
+          git checkout --orphan backup-latest
+          git add -A
+          git commit -m "Latest Backup: $(date -u +'%Y-%m-%d %H:%M UTC')" || echo "No changes to commit"
+          git push origin backup-latest --force
