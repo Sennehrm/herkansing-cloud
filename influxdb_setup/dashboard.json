@@ -1,0 +1,196 @@
+{
+  "meta": {
+    "version": "1",
+    "type": "dashboard",
+    "name": "Smart Controller Gateway-Template",
+    "description": "Export van het Smart Controller Gateway Dashboard"
+  },
+  "content": {
+    "data": {
+      "type": "dashboard",
+      "attributes": {
+        "name": "Smart Controller Gateway",
+        "description": "Smart Sensor Gateway Dashboard met live waarden en gemiddelden"
+      },
+      "relationships": {
+        "cell": {
+          "data": [
+            { "type": "cell", "id": "cell_joy1" },
+            { "type": "cell", "id": "cell_joy2" },
+            { "type": "cell", "id": "cell_btn" },
+            { "type": "cell", "id": "cell_avg1_1h" },
+            { "type": "cell", "id": "cell_avg2_1h" },
+            { "type": "cell", "id": "cell_avg1_24h" },
+            { "type": "cell", "id": "cell_avg2_24h" }
+          ]
+        }
+      }
+    },
+    "included": [
+      {
+        "id": "cell_joy1",
+        "type": "cell",
+        "attributes": { "x": 0, "y": 0, "w": 6, "h": 4 },
+        "relationships": { "view": { "data": { "type": "view", "id": "view_joy1" } } }
+      },
+      {
+        "id": "view_joy1",
+        "type": "view",
+        "attributes": {
+          "name": "Joystick 1 (Live X & Y)",
+          "properties": {
+            "type": "xy",
+            "queries": [
+              {
+                "text": "from(bucket: \"sensor_data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"joystick1\")\n  |> filter(fn: (r) => r[\"_field\"] == \"x\" or r[\"_field\"] == \"y\")",
+                "editMode": "advanced"
+              }
+            ],
+            "axes": {
+              "x": { "bounds": ["", ""], "label": "Tijd" },
+              "y": { "bounds": ["0", "255"], "label": "Positie (0-255)" }
+            },
+            "geom": "line"
+          }
+        }
+      },
+      {
+        "id": "cell_joy2",
+        "type": "cell",
+        "attributes": { "x": 6, "y": 0, "w": 6, "h": 4 },
+        "relationships": { "view": { "data": { "type": "view", "id": "view_joy2" } } }
+      },
+      {
+        "id": "view_joy2",
+        "type": "view",
+        "attributes": {
+          "name": "Joystick 2 (Live X & Y)",
+          "properties": {
+            "type": "xy",
+            "queries": [
+              {
+                "text": "from(bucket: \"sensor_data\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"joystick2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"x\" or r[\"_field\"] == \"y\")",
+                "editMode": "advanced"
+              }
+            ],
+            "axes": {
+              "x": { "bounds": ["", ""], "label": "Tijd" },
+              "y": { "bounds": ["0", "255"], "label": "Positie (0-255)" }
+            },
+            "geom": "line"
+          }
+        }
+      },
+      {
+        "id": "cell_btn",
+        "type": "cell",
+        "attributes": { "x": 0, "y": 4, "w": 4, "h": 3 },
+        "relationships": { "view": { "data": { "type": "view", "id": "view_btn" } } }
+      },
+      {
+        "id": "view_btn",
+        "type": "view",
+        "attributes": {
+          "name": "Laatste Knop Ingedrukt",
+          "properties": {
+            "type": "single-stat",
+            "queries": [
+              {
+                "text": "from(bucket: \"sensor_data\")\n  |> range(start: -24h, stop: now())\n  |> filter(fn: (r) => r[\"_measurement\"] == \"button_data\")\n  |> filter(fn: (r) => r[\"_field\"] == \"button_name\" or r[\"_field\"] == \"pressed\")\n  |> last()",
+                "editMode": "advanced"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cell_avg1_1h",
+        "type": "cell",
+        "attributes": { "x": 4, "y": 4, "w": 4, "h": 3 },
+        "relationships": { "view": { "data": { "type": "view", "id": "view_avg1_1h" } } }
+      },
+      {
+        "id": "view_avg1_1h",
+        "type": "view",
+        "attributes": {
+          "name": "Gemiddelde Joystick 1 (1 uur)",
+          "properties": {
+            "type": "single-stat",
+            "queries": [
+              {
+                "text": "from(bucket: \"sensor_data\")\n  |> range(start: -1h, stop: now())\n  |> filter(fn: (r) => r[\"_measurement\"] == \"joystick1\")\n  |> filter(fn: (r) => r[\"_field\"] == \"x\" or r[\"_field\"] == \"y\")\n  |> mean()",
+                "editMode": "advanced"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cell_avg2_1h",
+        "type": "cell",
+        "attributes": { "x": 8, "y": 4, "w": 4, "h": 3 },
+        "relationships": { "view": { "data": { "type": "view", "id": "view_avg2_1h" } } }
+      },
+      {
+        "id": "view_avg2_1h",
+        "type": "view",
+        "attributes": {
+          "name": "Gemiddelde Joystick 2 (1 uur)",
+          "properties": {
+            "type": "single-stat",
+            "queries": [
+              {
+                "text": "from(bucket: \"sensor_data\")\n  |> range(start: -1h, stop: now())\n  |> filter(fn: (r) => r[\"_measurement\"] == \"joystick2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"x\" or r[\"_field\"] == \"y\")\n  |> mean()",
+                "editMode": "advanced"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cell_avg1_24h",
+        "type": "cell",
+        "attributes": { "x": 0, "y": 7, "w": 6, "h": 3 },
+        "relationships": { "view": { "data": { "type": "view", "id": "view_avg1_24h" } } }
+      },
+      {
+        "id": "view_avg1_24h",
+        "type": "view",
+        "attributes": {
+          "name": "Gemiddelde Joystick 1 (24 uur)",
+          "properties": {
+            "type": "single-stat",
+            "queries": [
+              {
+                "text": "from(bucket: \"sensor_data\")\n  |> range(start: -24h, stop: now())\n  |> filter(fn: (r) => r[\"_measurement\"] == \"joystick1\")\n  |> filter(fn: (r) => r[\"_field\"] == \"x\" or r[\"_field\"] == \"y\")\n  |> mean()",
+                "editMode": "advanced"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cell_avg2_24h",
+        "type": "cell",
+        "attributes": { "x": 6, "y": 7, "w": 6, "h": 3 },
+        "relationships": { "view": { "data": { "type": "view", "id": "view_avg2_24h" } } }
+      },
+      {
+        "id": "view_avg2_24h",
+        "type": "view",
+        "attributes": {
+          "name": "Gemiddelde Joystick 2 (24 uur)",
+          "properties": {
+            "type": "single-stat",
+            "queries": [
+              {
+                "text": "from(bucket: \"sensor_data\")\n  |> range(start: -24h, stop: now())\n  |> filter(fn: (r) => r[\"_measurement\"] == \"joystick2\")\n  |> filter(fn: (r) => r[\"_field\"] == \"x\" or r[\"_field\"] == \"y\")\n  |> mean()",
+                "editMode": "advanced"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
